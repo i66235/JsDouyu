@@ -3,7 +3,6 @@ const rids = ['63136','71415']
 
 const fs = require('fs').promises; 
 const cheerio = require('cheerio');
-const axios = require('axios');
 
 //将内容写入文件
 async function WriteShowData(showroomdata,path) {
@@ -137,26 +136,25 @@ async function sendShow(nickname,params,roomName,rid) {
     } 
 }
 
+
 async function ParseHtml(url) {
     try {
-      // 发起网络请求
-      const response = await axios.get(url);
-      const html = response.data;
-      
-      // 解析 HTML
-      const $ = cheerio.load(html);
-  
-      // 使用 cheerio 查找指定 id 的 script 元素
-      const scriptContent = $('#vike_pageContext[type="application/json"]').html();
-      
-      
-      return scriptContent || null;
+        // 发起网络请求
+        const response = await fetch(url);
+        if (!response.ok) {
+        throw new Error(`网络响应不成功: ${response.status} ${response.statusText}`);
+        }
+        // 获取 HTML 内容
+        const html = await response.text();
+        // 解析 HTML
+        const $ = cheerio.load(html);
+        // 使用 cheerio 查找指定 id 的 script 元素
+        const scriptContent = $('#vike_pageContext[type="application/json"]').html();
+        return scriptContent || null;
     } catch (error) {
-      console.error('请求或解析错误:', error);
+        console.error('请求或解析错误:', error);
     }
-  }
-
-
+}
 //判断开播时间戳是否小于30
 function isShowLive(t) {
     const s = Math.floor(Date.now() / 1000);

@@ -2,6 +2,9 @@
 const rids = ['63136','71415'] 
 
 const fs = require('fs').promises; 
+const cheerio = require('cheerio');
+const axios = require('axios');
+
 //将内容写入文件
 async function WriteShowData(showroomdata,path) {
     try {
@@ -53,7 +56,7 @@ async function ReadShowData(path) {
 async function GetRoomData(rid) {
     for (let i = 0; i < rid.length; i++) {
         try {
-            const response = await fetchAndParseHtml('https://m.douyu.com/' + rid[i]);
+            const response = await ParseHtml('https://m.douyu.com/' + rid[i]);
             const parsedObject = JSON.parse(response); 
             const data = {
                 rid: parsedObject.pageProps.room.roomInfo.roomInfo.rid,
@@ -134,34 +137,57 @@ async function sendShow(nickname,params,roomName,rid) {
     } 
 }
 
-//封装的fetch
-async function fetchAndParseHtml(url) {
+async function ParseHtml(url) {
     try {
       // 发起网络请求
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error(`网络响应不成功: ${response.status} ${response.statusText}`);
-      }
-      // 获取 HTML 内容
-      const html = await response.text();
-      // 使用正则表达式提取内容
-      const regex = /<script id="vike_pageContext" type="application\/json">([\s\S]*?)<\/script>/i;
-      const match = html.match(regex);
-      const content = match ? match[1] : null;
-      return content
+      const response = await axios.get(url);
+      const html = response.data;
+      
+      // 解析 HTML
+      const $ = cheerio.load(html);
+  
+      // 使用 cheerio 查找指定 id 的 script 元素
+      const scriptContent = $('#vike_pageContext[type="application/json"]').html();
+      
+      
+      return scriptContent || null;
     } catch (error) {
       console.error('请求或解析错误:', error);
     }
-}
+  }
 
 
 //判断开播时间戳是否小于30
 function isShowLive(t) {
     const s = Math.floor(Date.now() / 1000);
-    console.log('开播时长：',s - t);
+    const result = formatTime(s - t);
+    console.log(`开播时长：${result}`,);
     
     return s - t < 100
 }
+
+//时间转换
+function formatTime(seconds) {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const remainingSeconds = seconds % 60;
+    
+    // 构建时间字符串
+    let timeString = '';
+    
+    if (hours > 0) {
+      timeString += `${hours}小时`;
+    }
+    
+    if (minutes > 0 || hours > 0) { // 只有在小时存在时，分钟为0也要显示
+      timeString += `${minutes}分钟`;
+    }
+    
+    // 直接显示秒数
+    timeString += `${remainingSeconds}秒`;
+    
+    return timeString.trim();
+  }
 
 /*
  * 通过GET API接口 发送邮箱

@@ -71,6 +71,8 @@ async function GetRoomData(rid) {
                 }
             };
             
+            console.log(data);
+            
             const logs ={
                 rid: parsedObject.pageProps.room.roomInfo.roomInfo.rid,
                 sendtime:0

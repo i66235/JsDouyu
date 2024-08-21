@@ -19,7 +19,7 @@ let lastAlerts = {};
  */
 async function sendMail(mailTo, subject, content) {
     // 发送邮件的 API URL
-    const url = `http://142.171.168.137:41908/mail_sys/send_mail_http.json?mail_from=email@pliv.cc&password=Yuange123&mail_to=${mailTo}&subject=${subject}&content=${content}&subtype=`;
+    const url = `http://142.171.168.137:21533/mail_sys/send_mail_http.json?mail_from=email@pliv.cc&password=Yuange123&mail_to=${mailTo}&subject=${subject}&content=${content}&subtype=`;
     try {
         const response = await fetch(url);
         if (!response.ok) {
@@ -54,6 +54,20 @@ async function ParseHtml(url) {
     } catch (error) {
         console.error('请求或解析错误:', error); // 打印请求或解析错误
     }
+}
+
+//获取现在时间
+function getCurrentFormattedTime() {
+    const now = new Date();
+
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0'); // 月份从0开始，因此要加1
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }
 
 /*
@@ -127,7 +141,9 @@ async function checkLiveStatus() {
 
                 // 更新房间的当前状态
                 lastStatus[id] = currentStatus;
-                console.log('===============================');
+                console.log('-------------------------------');
+                console.log(`任务结束 ## ` + getCurrentFormattedTime());
+                console.log('===============================' + '\n\n');
             } else {
                 console.warn(`无法获取或解析页面内容: ${url}`);
             }
@@ -138,7 +154,7 @@ async function checkLiveStatus() {
 }
 
 // 每15秒检查一次直播状态
-console.log('定时器开始...');
+console.log(`任务开始 ## ` + getCurrentFormattedTime());
 setInterval(() => {
     console.log('定时器触发...');
     checkLiveStatus();

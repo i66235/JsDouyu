@@ -15,20 +15,30 @@ let lastAlerts = {};
  * @param {string} mailTo - 收件人邮箱地址
  * @param {string} subject - 邮件标题
  * @param {string} content - 邮件内容
+ * @param {number} [retries=3] - 重试次数
  * @returns {Promise<void>} - 返回一个 Promise
  */
-async function sendMail(mailTo, subject, content) {
+async function sendMail(mailTo, subject, content, retries = 3) {
     // 发送邮件的 API URL
     const url = `http://142.171.168.137:21533/mail_sys/send_mail_http.json?mail_from=email@pliv.cc&password=Yuange123&mail_to=${mailTo}&subject=${subject}&content=${content}&subtype=`;
-    try {
-        const response = await fetch(url);
-        if (!response.ok) {
-            throw new Error(`网络响应不成功: ${response.status} ${response.statusText}`);
+
+    for (let attempt = 1; attempt <= retries; attempt++) {
+        try {
+            const response = await fetch(url, { timeout: 5000 }); // 设置超时
+            if (!response.ok) {
+                throw new Error(`网络响应不成功: ${response.status} ${response.statusText}`);
+            }
+            const data = await response.json();
+            console.log('邮箱状态:', data); // 打印邮箱发送状态
+            return; // 成功发送邮件后退出函数
+        } catch (error) {
+            if (attempt === retries) {
+                console.error('发送邮件失败，已达最大重试次数:', error);
+                throw error; // 达到最大重试次数后抛出错误
+            }
+            console.warn(`发送邮件失败，正在进行第 ${attempt} 次重试:`, error);
+            await new Promise(resolve => setTimeout(resolve, 1000 * attempt)); // 指数级回退等待
         }
-        const data = await response.json();
-        console.log('邮箱状态:', data); // 打印邮箱发送状态
-    } catch (error) {
-        console.error('发送邮件失败:', error); // 打印发送邮件错误
     }
 }
 

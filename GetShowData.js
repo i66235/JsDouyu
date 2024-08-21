@@ -158,7 +158,9 @@ async function fetchAndParseHtml(url) {
 //判断开播时间戳是否小于30
 function isShowLive(t) {
     const s = Math.floor(Date.now() / 1000);
-    return s - t < 30
+    console.log(s - t);
+    
+    return s - t < 100
 }
 
 /*
